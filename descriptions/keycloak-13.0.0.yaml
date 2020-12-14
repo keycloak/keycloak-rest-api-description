@@ -38,7 +38,7 @@ paths:
     summary: Applications
     get:
       tags:
-      - '#account'
+      - Applications
       parameters:
       - example:
           HTTP Parameter:
@@ -79,7 +79,7 @@ paths:
       servers:
       - url: http://localhost:8081
       tags:
-      - '#account'
+      - Applications
       parameters:
       - name: clientId
         description: Client ID to set a consent for
@@ -157,7 +157,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ConsentRepresentation'
       tags:
-      - '#account'
+      - Applications
       responses:
         "401":
           content:
@@ -177,7 +177,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ConsentRepresentation'
       tags:
-      - '#account'
+      - Applications
       responses:
         "200":
           content:
@@ -198,7 +198,7 @@ paths:
       summary: Creates a consent for the client with the given client id
     delete:
       tags:
-      - '#account'
+      - Applications
       responses:
         "404":
           description: Resource not found
@@ -216,7 +216,7 @@ paths:
     summary: Resources
     get:
       tags:
-      - '#account'
+      - Resources
       responses:
         "200":
           content:
@@ -252,7 +252,7 @@ paths:
     summary: Linked Accounts
     get:
       tags:
-      - '#account'
+      - Linked Accounts
       responses:
         "200":
           content:
@@ -271,7 +271,7 @@ paths:
     summary: Credentials
     get:
       tags:
-      - '#account'
+      - Credentials
       parameters:
       - example:
           Param Type:
@@ -356,7 +356,7 @@ paths:
     summary: Credential management
     delete:
       tags:
-      - '#account'
+      - Credentials
       responses:
         "204":
           description: Empty response
@@ -381,7 +381,7 @@ paths:
     summary: Credential label
     put:
       tags:
-      - '#account'
+      - Credentials
       responses:
         "400":
           description: Invalid request
@@ -404,7 +404,7 @@ paths:
     summary: Resources (shared with me)
     get:
       tags:
-      - '#account'
+      - Resources
       responses:
         "401":
           $ref: '#/components/responses/Unauthorized'
@@ -421,7 +421,7 @@ paths:
     summary: Resources (shared with others)
     get:
       tags:
-      - '#account'
+      - Resources
       responses:
         "200":
           content:
@@ -440,7 +440,7 @@ paths:
     summary: Resources (pending requests)
     get:
       tags:
-      - '#account'
+      - Resources
       responses:
         "401":
           $ref: '#/components/responses/Unauthorized'
@@ -457,7 +457,7 @@ paths:
     summary: Resource (by ID)
     get:
       tags:
-      - '#account'
+      - Resources
       parameters:
       - name: id
         in: path
@@ -482,7 +482,7 @@ paths:
     summary: Sessions (by ID)
     delete:
       tags:
-      - '#account'
+      - Sessions
       parameters:
       - example:
           ID Example:
@@ -518,7 +518,7 @@ paths:
     summary: Linked Accounts (by Provider ID)
     get:
       tags:
-      - '#account'
+      - Linked Accounts
       parameters:
       - name: redirectUri
         description: Redirect URI
@@ -552,9 +552,10 @@ paths:
       required: true
   /account:
     summary: Account
+    description: ""
     get:
       tags:
-      - '#account'
+      - Account
       responses:
         "200":
           content:
@@ -617,7 +618,7 @@ paths:
                   attributes: {}
         required: true
       tags:
-      - '#account'
+      - Account
       responses:
         "204":
           description: HTTP response on successful update
@@ -669,7 +670,7 @@ paths:
     summary: Sessions
     get:
       tags:
-      - '#account'
+      - Sessions
       responses:
         "200":
           content:
@@ -743,7 +744,7 @@ paths:
       description: ""
     delete:
       tags:
-      - '#account'
+      - Account
       parameters:
       - example:
           Example:
@@ -767,7 +768,7 @@ paths:
     summary: Devices
     get:
       tags:
-      - '#account'
+      - Sessions
       responses:
         "200":
           content:
@@ -897,8 +898,18 @@ components:
 security:
 - access_token: []
 tags:
-- name: '#account'
+- name: Account
   description: Account REST API
+- name: Applications
+  description: ""
+- name: Credentials
+  description: ""
+- name: Linked Accounts
+  description: ""
+- name: Resources
+  description: ""
+- name: Sessions
+  description: ""
 externalDocs:
   description: Keycloak Developer Docs
   url: https://www.keycloak.org/docs-api/v1alpha1/rest-api/index.html
