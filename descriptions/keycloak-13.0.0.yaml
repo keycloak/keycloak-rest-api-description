@@ -34,128 +34,6 @@ servers:
       default: master
       description: Realm name
 paths:
-  /account:
-    get:
-      tags:
-      - '#account'
-      parameters:
-      - example:
-          Realm Name:
-            value: '"master"'
-        name: realm
-        description: Realm name
-        schema:
-          type: string
-        in: path
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserRepresentation'
-                properties:
-                  emailVerified:
-                    type: boolean
-                  attributes:
-                    type: object
-                  username:
-                    type: string
-              example:
-                HTTP Response:
-                  value:
-                    username: admin
-                    firstName: Ada
-                    lastName: Lovelace
-                    email: admin@admin.org
-                    emailVerified: false
-                    attributes:
-                      super:
-                      - admin
-          description: Account details.
-        "401":
-          content:
-            application/json:
-              example:
-                HTTP Response:
-                  value:
-                    error: HTTP 401 Unauthorized
-          description: "Expired token, or the client role `view-profile` is not assigned "
-      summary: User's account information
-      description: Retrieve the account information associated with the authenticated
-        user.
-    post:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserRepresentation'
-              properties:
-                emailVerified:
-                  type: boolean
-                attributes:
-                  type: object
-                email:
-                  type: string
-                username:
-                  type: string
-            example:
-              HTTP Request:
-                value:
-                  username: admin
-                  email: admin@keycloak.org
-                  emailVerified: false
-                  attributes: {}
-        required: true
-      tags:
-      - '#account'
-      responses:
-        "204":
-          description: HTTP response on successful update
-        "401":
-          content:
-            application/json:
-              schema:
-                type: string
-              example:
-                Error:
-                  value:
-                    error: HTTP 401 Unauthorized
-          description: |-
-            Access token does not have the rights to create or modify an account. Potential causes:
-
-            * Expired access token
-            * Access token does not have access to perform this operation
-        "400":
-          content:
-            application/json:
-              schema:
-                type: string
-              example:
-                Read-only Username:
-                  value:
-                    errorMessage: readOnlyUsernameMessage
-                Error:
-                  value:
-                    error: unknown_error
-          description: "HTTP response on invalid requests. For example:\n\n* Trying\
-            \ to modify the `username`, which is read-only, trough the API.\n* Using\
-            \ a malformed HTTP request"
-        "409":
-          content:
-            application/json:
-              schema:
-                type: string
-              example:
-                E-mail exists:
-                  value:
-                    error: Email already exists
-                Username exists:
-                  value:
-                    error: Username already exists
-          description: Username or e-mail already exists.
-      summary: Update or create a user's account
-      description: ""
   /account/applications:
     get:
       tags:
@@ -186,30 +64,15 @@ paths:
                     rootUrl: "${authAdminUrl}"
                     baseUrl: /admin/master/console/
                     effectiveUrl: http://localhost:8081/auth/admin/master/console/
-          description: ""
+          description: List of applications
         "401":
-          content:
-            application/json:
-              schema:
-                type: string
-              example:
-                HTTP Response:
-                  value:
-                    error: HTTP 401 Unauthorized
-          description: Expired or invalid token.
+          $ref: '#/components/responses/Unauthorized'
       summary: List of applications associated with user's account
       description: "List all the Internal and Thirdy-Party apps associated with user's\
         \ account. \n\n* Internal apps: are the apps already existent in the admin\
         \ console\n* Thirdy-party apps: external apps which users granted permissions\
         \ like Facebook, GitHub and etc."
   /account/applications/{clientId}/consent:
-    servers:
-    - url: http://localhost:8081
-    - url: "/auth/realms/master/account/applications/{clientId}/consent"
-      description: ""
-      variables:
-        clientId:
-          description: client id to set a consent for
     get:
       servers:
       - url: http://localhost:8081
@@ -229,9 +92,6 @@ paths:
         description: client id to return the consent for
         schema:
           type: string
-        in: path
-        required: true
-      - name: realm
         in: path
         required: true
       responses:
@@ -271,7 +131,7 @@ paths:
           description: List of consents for that particular client
         "204":
           description: Empty response
-        "401":
+        "400":
           content:
             application/json:
               schema:
@@ -279,18 +139,13 @@ paths:
               example:
                 Error:
                   value:
-                    error: HTTP 401 Unauthorized
-          description: Expired or invalid token.
-        "400":
-          content:
-            application/json:
-              example:
-                Error:
-                  value:
                     error: unknown_error
                 Error 2:
                   value: "{\"errorMessage\":\"Scope id org.keycloak.representations.account.ConsentScopeRepresentation@646f5191\
                     \ does not exist for client null.\"}%"
+          description: Invalid parameters
+        "401":
+          $ref: '#/components/responses/Unauthorized'
       summary: Returns the consent for the client with the given client id
       description: ""
     put:
@@ -301,10 +156,6 @@ paths:
               $ref: '#/components/schemas/ConsentRepresentation'
       tags:
       - '#account'
-      parameters:
-      - name: realm
-        in: path
-        required: true
       responses:
         "401":
           content:
@@ -326,30 +177,484 @@ paths:
       tags:
       - '#account'
       responses:
-        "200": {}
-        "401": {}
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentRepresentation'
+          description: Consent of the client
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+              example:
+                HTTP response:
+                  value:
+                    error: HTTP 401 Unauthorized
+          description: Expired or invalid token.
       summary: Creates a consent for the client with the given client id
     delete:
       tags:
       - '#account'
+      responses:
+        "404":
+          description: Resource not found
+        "204":
+          description: The resource was deleted successfully
+      summary: Deletes the consent for the client with the given client id
     parameters:
     - name: clientId
+      description: Client ID
+      schema:
+        type: string
       in: path
       required: true
-  /account/sessions:
+  /account/resources:
+    get:
+      tags:
+      - '#account'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resource'
+          description: Returns a list of resources where the current user is the resource
+            owner
+        "401":
+          description: Expired or invalid token.
+      summary: Returns a list of resources where the current user is the resource
+        owner
+      description: ""
+    parameters:
+    - name: name
+      description: Name of the resource
+      schema:
+        type: string
+      in: query
+    - name: first
+      description: First result
+      schema:
+        type: string
+      in: query
+    - name: max
+      description: Max result
+      schema:
+        type: string
+      in: query
+  /account/linked-accounts:
+    get:
+      tags:
+      - '#account'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LinkedAccountRepresentation'
+          description: List of identity providers that's associated with user's account
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+      summary: Returns a list of social login accounts associated with the current
+        user
+      description: ""
+  /account/credentials:
     get:
       tags:
       - '#account'
       parameters:
       - example:
-          Realm Name:
-            value: '"master"'
-        name: realm
-        description: Realm name
+          Param Type:
+            value: type=password
+        name: type
+        description: "Allows to filter just single credential type, which will be\
+          \ specified as this parameter. If null, it will return all credential types"
+        schema:
+          type: string
+        in: query
+      - example:
+          Param:
+            value: userCredentials=false
+        name: userCredentials
+        description: "Specifies if user credentials should be returned. If true, they\
+          \ will be returned in the \"userCredentials\" attribute of particular credential.\
+          \ Defaults to true."
+        schema:
+          type: boolean
+        in: query
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                HTTP Response:
+                  value:
+                  - type: password
+                    category: basic-authentication
+                    displayName: password-display-name
+                    helptext: password-help-text
+                    iconCssClass: kcAuthenticatorPasswordClass
+                    updateAction: UPDATE_PASSWORD
+                    removeable: false
+                    userCredentials:
+                    - id: 4e6042dc-80d8-4b36-8a02-cae6d2c65ed9
+                      type: password
+                      createdDate: 1606416670489
+                      credentialData: "{\"hashIterations\":27500,\"algorithm\":\"\
+                        pbkdf2-sha256\",\"additionalParameters\":{}}"
+                  - type: otp
+                    category: two-factor
+                    displayName: otp-display-name
+                    helptext: otp-help-text
+                    iconCssClass: kcAuthenticatorOTPClass
+                    createAction: CONFIGURE_TOTP
+                    removeable: true
+                    userCredentials: []
+          description: "Retrieve the stream of credentials available to the current\
+            \ logged in user.\nIt will return only credentials of enabled types, \
+            \ which user can use to au\nthenticate in some authentication flow."
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+      summary: Retrieve the stream of credentials available to the current logged
+        in user
+      description: "It will return only credentials of enabled types, which user can\
+        \ use to authenticate in some authentication flow."
+    parameters:
+    - example:
+        Type example:
+          value: type=password
+      name: type
+      description: "Allows to filter just single credential type, which will be specified\
+        \ as this parameter. If null, it will return all credential types"
+      schema:
+        type: string
+      in: query
+      required: false
+    - example:
+        User Credentials example:
+          value: userCredentials=false
+      name: userCredentials
+      description: "Specifies if user credentials should be returned. If true, they\
+        \ will be returned in the \"userCredentials\" attribute of particular credential.\
+        \ Defaults to true"
+      schema:
+        type: boolean
+      in: query
+  /account/credentials/{credentialId}:
+    delete:
+      tags:
+      - '#account'
+      responses:
+        "204":
+          description: Empty response
+        "404":
+          content:
+            application/json:
+              schema:
+                type: string
+              example:
+                Error:
+                  value:
+                    error: Credential not found
+          description: Credential does not exist
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+      summary: Remove a credential of current user
+    parameters:
+    - name: credentialId
+      in: path
+      required: true
+  /account/credentials/{credentialId}/label:
+    put:
+      tags:
+      - '#account'
+      responses:
+        "400":
+          description: Invalid request
+        "204":
+          description: Empty response
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+      summary: Update a user label of specified credential of current user
+    parameters:
+    - example:
+        Credential ID example:
+          value: '"79fa6e23-bb31-4f09-9940-18992913262e"'
+      name: credentialId
+      description: "ID of the credential, which will be updated"
+      schema:
+        type: string
+      in: path
+      required: true
+  /account/resources/shared-with-me:
+    get:
+      tags:
+      - '#account'
+      responses:
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resource'
+          description: List of resources
+      summary: Returns a list of resources shared with the current user
+  /account/resources/shared-with-others:
+    get:
+      tags:
+      - '#account'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resource'
+          description: List of resources
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+      summary: Returns a list of resources shared with others
+      description: The endpoint returns a list of resources where the current user
+        is the resource owner and the resource is shared with other users.
+  /account/resources/pending-requests:
+    get:
+      tags:
+      - '#account'
+      responses:
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResourcePermission'
+          description: List of pending requests
+      summary: Returns a list of pending requests
+  /account/resources/{id}:
+    get:
+      tags:
+      - '#account'
+      parameters:
+      - name: id
+        in: path
+        required: true
+      responses:
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+          description: Return the resource
+      summary: Returns the resource by id where the current user is the resource owner
+    parameters:
+    - name: id
+      schema:
+        type: string
+      in: path
+      required: true
+  /account/sessions/{id}:
+    delete:
+      tags:
+      - '#account'
+      parameters:
+      - example:
+          ID Example:
+            value: 73652c46-767b-494f-a581-48ec05ab2bf8
+        name: id
+        description: id a specific session to remove
         schema:
           type: string
         in: path
         required: true
+      responses:
+        "204":
+          description: Empty response
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+              example:
+                Error:
+                  value:
+                    error: HTTP 401 Unauthorized
+          description: Expired or invalid token.
+      summary: Remove a specific session
+      description: ""
+    parameters:
+    - name: id
+      schema:
+        type: string
+      in: path
+      required: true
+  /account/linked-accounts/{providerId}:
+    get:
+      tags:
+      - '#account'
+      parameters:
+      - name: redirectUri
+        description: Redirect URI
+        schema:
+          type: string
+        in: query
+        required: true
+      - name: providerId
+        description: Provider ID
+        schema:
+          type: string
+        in: path
+        required: true
+      responses:
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "400":
+          description: Invalid Redirect URI
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountLinkUriRepresentation'
+          description: Retrieve the linked account URI
+        "500":
+          description: Failed to process response
+      summary: Filter the linked accounts by provider id (deprecated)
+    parameters:
+    - name: providerId
+      in: path
+      required: true
+  /account:
+    get:
+      tags:
+      - '#account'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRepresentation'
+                properties:
+                  emailVerified:
+                    type: boolean
+                  attributes:
+                    type: object
+                  username:
+                    type: string
+              example:
+                HTTP Response:
+                  value:
+                    username: admin
+                    firstName: Ada
+                    lastName: Lovelace
+                    email: admin@admin.org
+                    emailVerified: false
+                    attributes:
+                      super:
+                      - admin
+          description: Account details.
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+              example:
+                HTTP Response:
+                  value:
+                    error: HTTP 401 Unauthorized
+          description: "Expired token, or the client role `view-profile` is not assigned "
+      summary: User's account information
+      description: Retrieve the account information associated with the authenticated
+        user.
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRepresentation'
+              properties:
+                emailVerified:
+                  type: boolean
+                attributes:
+                  type: object
+                email:
+                  type: string
+                username:
+                  type: string
+            example:
+              HTTP Request:
+                value:
+                  username: admin
+                  email: admin@keycloak.org
+                  emailVerified: false
+                  attributes: {}
+        required: true
+      tags:
+      - '#account'
+      responses:
+        "204":
+          description: HTTP response on successful update
+        "400":
+          content:
+            application/json:
+              schema:
+                type: string
+              example:
+                Read-only Username:
+                  value:
+                    errorMessage: readOnlyUsernameMessage
+                Error:
+                  value:
+                    error: unknown_error
+          description: "HTTP response on invalid requests. For example:\n\n* Trying\
+            \ to modify the `username`, which is read-only, trough the API.\n* Using\
+            \ a malformed HTTP request"
+        "401":
+          content:
+            application/json:
+              schema:
+                type: string
+              example:
+                Error:
+                  value:
+                    error: HTTP 401 Unauthorized
+          description: |-
+            Access token does not have the rights to create or modify an account. Potential causes:
+
+            * Expired access token
+            * Access token does not have access to perform this operation
+        "409":
+          content:
+            application/json:
+              schema:
+                type: string
+              example:
+                E-mail exists:
+                  value:
+                    error: Email already exists
+                Username exists:
+                  value:
+                    error: Username already exists
+          description: Username or e-mail already exists.
+      summary: Update or create a user's account
+      description: ""
+  /account/sessions:
+    get:
+      tags:
+      - '#account'
       responses:
         "200":
           content:
@@ -443,235 +748,16 @@ paths:
       schema:
         type: string
       in: query
-  /account/resources:
-    get:
-      tags:
-      - '#account'
-      summary: Returns a list of resources where the current user is the resource
-        owner
-      description: Auto generated using Swagger Inspector
-    parameters:
-    - name: name
-      description: Name of the resource
-      schema:
-        type: string
-      in: query
-    - name: first
-      description: First result
-      schema:
-        type: string
-      in: query
-    - name: max
-      description: Max result
-      schema:
-        type: string
-      in: query
-  /account/linked-accounts:
-    get:
-      tags:
-      - '#account'
-      summary: Returns a list of social login accounts associated with the current
-        user
-      description: Auto generated using Swagger Inspector
-  /account/credentials:
-    get:
-      tags:
-      - '#account'
-      parameters:
-      - example:
-          Param Type:
-            value: type=password
-        name: type
-        description: "Allows to filter just single credential type, which will be\
-          \ specified as this parameter. If null, it will return all credential types"
-        schema:
-          type: string
-        in: query
-      - example:
-          Param:
-            value: userCredentials=false
-        name: userCredentials
-        description: "Specifies if user credentials should be returned. If true, they\
-          \ will be returned in the \"userCredentials\" attribute of particular credential.\
-          \ Defaults to true."
-        schema:
-          type: boolean
-        in: query
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                type: object
-              example:
-                HTTP Response:
-                  value:
-                  - type: password
-                    category: basic-authentication
-                    displayName: password-display-name
-                    helptext: password-help-text
-                    iconCssClass: kcAuthenticatorPasswordClass
-                    updateAction: UPDATE_PASSWORD
-                    removeable: false
-                    userCredentials:
-                    - id: 4e6042dc-80d8-4b36-8a02-cae6d2c65ed9
-                      type: password
-                      createdDate: 1606416670489
-                      credentialData: "{\"hashIterations\":27500,\"algorithm\":\"\
-                        pbkdf2-sha256\",\"additionalParameters\":{}}"
-                  - type: otp
-                    category: two-factor
-                    displayName: otp-display-name
-                    helptext: otp-help-text
-                    iconCssClass: kcAuthenticatorOTPClass
-                    createAction: CONFIGURE_TOTP
-                    removeable: true
-                    userCredentials: []
-          description: "Retrieve the stream of credentials available to the current\
-            \ logged in user.\nIt will return only credentials of enabled types, \
-            \ which user can use to au\nthenticate in some authentication flow."
-        "401":
-          content:
-            application/json:
-              schema:
-                type: string
-              example:
-                Error:
-                  value:
-                    error: HTTP 401 Unauthorized
-          description: Expired or invalid token.
-      summary: Retrieve the stream of credentials available to the current logged
-        in user
-      description: "It will return only credentials of enabled types, which user can\
-        \ use to authenticate in some authentication flow."
-    parameters:
-    - example:
-        Type example:
-          value: type=password
-      name: type
-      description: "Allows to filter just single credential type, which will be specified\
-        \ as this parameter. If null, it will return all credential types"
-      schema:
-        type: string
-      in: query
-      required: false
-    - example:
-        User Credentials example:
-          value: userCredentials=false
-      name: userCredentials
-      description: "Specifies if user credentials should be returned. If true, they\
-        \ will be returned in the \"userCredentials\" attribute of particular credential.\
-        \ Defaults to true"
-      schema:
-        type: boolean
-      in: query
-  /account/credentials/{credentialId}:
-    delete:
-      tags:
-      - '#account'
-      responses:
-        "204":
-          description: Empty response
-        "404":
-          content:
-            application/json:
-              schema:
-                type: string
-              example:
-                Error:
-                  value:
-                    error: Credential not found
-          description: Credential does not exist
-        "401":
-          content:
-            application/json:
-              schema:
-                type: string
-              example:
-                Error:
-                  value:
-                    error: HTTP 401 Unauthorized
-          description: Expired or invalid token.
-      summary: Remove a credential of current user
-    parameters:
-    - name: credentialId
-      in: path
-      required: true
-  /account/credentials/{credentialId}/label:
-    put:
-      tags:
-      - '#account'
-      responses:
-        "401":
-          content:
-            application/json:
-              schema:
-                type: string
-              example:
-                Error:
-                  value:
-                    error: HTTP 401 Unauthorized
-          description: Expired or invalid token.
-        "400":
-          description: Invalid request
-        "204":
-          description: Empty response
-      summary: Update a user label of specified credential of current user
-    parameters:
-    - example:
-        Credential ID example:
-          value: '"79fa6e23-bb31-4f09-9940-18992913262e"'
-      name: credentialId
-      description: "ID of the credential, which will be updated"
-      schema:
-        type: string
-      in: path
-      required: true
-  /account/resources/shared-with-me:
-    get:
-      tags:
-      - '#account'
-      summary: Returns a list of resources shared with the current user
-  /account/resources/shared-with-others:
-    get:
-      tags:
-      - '#account'
-      summary: Returns a list of resources shared with others
-      description: The endpoint returns a list of resources where the current user
-        is the resource owner and the resource is shared with other users.
-  /account/resources/pending-requests:
-    get:
-      tags:
-      - '#account'
-      summary: Returns a list of pending requests
-  /account/resources/{id}:
-    get:
-      tags:
-      - '#account'
-      parameters:
-      - name: id
-        in: path
-        required: true
-      - name: realm
-        in: path
-        required: true
-      summary: Returns the resource by id where the current user is the resource owner
-    parameters:
-    - name: id
-      in: path
-      required: true
   /account/sessions/devices:
     get:
       tags:
       - '#account'
-      parameters:
-      - name: realm
-        in: path
-        required: true
       responses:
         "200":
           content:
             application/json:
+              schema:
+                type: string
               example:
                 HTTP response:
                   value:
@@ -731,51 +817,6 @@ paths:
                     error: HTTP 401 Unauthorized
           description: Expired or invalid token.
       summary: Get the device activity information based on the active sessions
-  /account/sessions/{id}:
-    delete:
-      tags:
-      - '#account'
-      parameters:
-      - example:
-          ID Example:
-            value: 73652c46-767b-494f-a581-48ec05ab2bf8
-        name: id
-        description: id a specific session to remove
-        schema:
-          type: string
-        in: path
-        required: true
-      - name: realm
-        in: path
-        required: true
-      responses:
-        "204":
-          description: Empty response
-        "401":
-          content:
-            application/json:
-              schema:
-                type: string
-              example:
-                Error:
-                  value:
-                    error: HTTP 401 Unauthorized
-          description: Expired or invalid token.
-      summary: Remove a specific session
-      description: ""
-    parameters:
-    - name: id
-      in: path
-      required: true
-  /account/linked-accounts/{providerId}:
-    get:
-      tags:
-      - '#account'
-      summary: Filter the linked accounts by provider id
-    parameters:
-    - name: providerId
-      in: path
-      required: true
 components:
   schemas:
     ConsentRepresentation:
@@ -790,6 +831,49 @@ components:
     ClientRepresentation:
       description: ""
       type: object
+    Resource:
+      description: ""
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          description: ""
+          type: string
+        name:
+          description: ""
+          type: string
+        displayName:
+          description: ""
+          type: string
+        uris:
+          description: ""
+          type: array
+          items:
+            type: string
+        iconURI:
+          description: ""
+          type: string
+    LinkedAccountRepresentation:
+      description: ""
+      type: object
+    AccountLinkUriRepresentation:
+      description: ""
+      type: object
+    ResourcePermission:
+      description: ""
+      type: object
+  responses:
+    Unauthorized:
+      content:
+        application/json:
+          schema:
+            type: string
+          example:
+            HTTP Response:
+              value:
+                error: HTTP 401 Unauthorized
+      description: Expired or invalid token.
   securitySchemes:
     oauth2:
       flows:
