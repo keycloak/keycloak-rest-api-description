@@ -12,8 +12,9 @@ jobs:
           node-version: '12'
       - run: |
           npm install -g redoc-cli
-          redoc-cli bundle descriptions/keycloak-13.0.0.yaml
           mkdir public
+          redoc-cli bundle descriptions/keycloak-13.0.0.yaml
+          redoc-cli bundle https://raw.githubusercontent.com/ccouzens/keycloak-openapi/master/keycloak/11.0.json -o public/admin.html
           mv redoc-static.html public/index.html
       - name: Deploy to GitHub Pages
         if: success()
