@@ -35,6 +35,7 @@ servers:
       description: Realm name
 paths:
   /account/applications:
+    summary: Applications
     get:
       tags:
       - '#account'
@@ -73,6 +74,7 @@ paths:
         \ console\n* Thirdy-party apps: external apps which users granted permissions\
         \ like Facebook, GitHub and etc."
   /account/applications/{clientId}/consent:
+    summary: Application Consent
     get:
       servers:
       - url: http://localhost:8081
@@ -211,6 +213,7 @@ paths:
       in: path
       required: true
   /account/resources:
+    summary: Resources
     get:
       tags:
       - '#account'
@@ -246,6 +249,7 @@ paths:
         type: string
       in: query
   /account/linked-accounts:
+    summary: Linked Accounts
     get:
       tags:
       - '#account'
@@ -264,6 +268,7 @@ paths:
         user
       description: ""
   /account/credentials:
+    summary: Credentials
     get:
       tags:
       - '#account'
@@ -348,6 +353,7 @@ paths:
         type: boolean
       in: query
   /account/credentials/{credentialId}:
+    summary: Credential management
     delete:
       tags:
       - '#account'
@@ -372,6 +378,7 @@ paths:
       in: path
       required: true
   /account/credentials/{credentialId}/label:
+    summary: Credential label
     put:
       tags:
       - '#account'
@@ -394,6 +401,7 @@ paths:
       in: path
       required: true
   /account/resources/shared-with-me:
+    summary: Resources (shared with me)
     get:
       tags:
       - '#account'
@@ -410,6 +418,7 @@ paths:
           description: List of resources
       summary: Returns a list of resources shared with the current user
   /account/resources/shared-with-others:
+    summary: Resources (shared with others)
     get:
       tags:
       - '#account'
@@ -428,6 +437,7 @@ paths:
       description: The endpoint returns a list of resources where the current user
         is the resource owner and the resource is shared with other users.
   /account/resources/pending-requests:
+    summary: Resources (pending requests)
     get:
       tags:
       - '#account'
@@ -444,6 +454,7 @@ paths:
           description: List of pending requests
       summary: Returns a list of pending requests
   /account/resources/{id}:
+    summary: Resource (by ID)
     get:
       tags:
       - '#account'
@@ -468,6 +479,7 @@ paths:
       in: path
       required: true
   /account/sessions/{id}:
+    summary: Sessions (by ID)
     delete:
       tags:
       - '#account'
@@ -503,6 +515,7 @@ paths:
       in: path
       required: true
   /account/linked-accounts/{providerId}:
+    summary: Linked Accounts (by Provider ID)
     get:
       tags:
       - '#account'
@@ -538,6 +551,7 @@ paths:
       in: path
       required: true
   /account:
+    summary: Account
     get:
       tags:
       - '#account'
@@ -652,6 +666,7 @@ paths:
       summary: Update or create a user's account
       description: ""
   /account/sessions:
+    summary: Sessions
     get:
       tags:
       - '#account'
@@ -749,6 +764,7 @@ paths:
         type: string
       in: query
   /account/sessions/devices:
+    summary: Devices
     get:
       tags:
       - '#account'
@@ -875,15 +891,11 @@ components:
                 error: HTTP 401 Unauthorized
       description: Expired or invalid token.
   securitySchemes:
-    oauth2:
-      flows:
-        implicit:
-          authorizationUrl: http://yourauthurl.com
-          scopes:
-            scope_name: Enter your scopes here
+    access_token:
+      flows: {}
       type: oauth2
 security:
-- oauth2: []
+- access_token: []
 tags:
 - name: '#account'
   description: Account REST API

@@ -50,6 +50,7 @@
     ],
     "paths": {
         "/account/applications": {
+            "summary": "Applications",
             "get": {
                 "tags": [
                     "#account"
@@ -105,6 +106,7 @@
             }
         },
         "/account/applications/{clientId}/consent": {
+            "summary": "Application Consent",
             "get": {
                 "servers": [
                     {
@@ -331,6 +333,7 @@
             ]
         },
         "/account/resources": {
+            "summary": "Resources",
             "get": {
                 "tags": [
                     "#account"
@@ -384,6 +387,7 @@
             ]
         },
         "/account/linked-accounts": {
+            "summary": "Linked Accounts",
             "get": {
                 "tags": [
                     "#account"
@@ -411,6 +415,7 @@
             }
         },
         "/account/credentials": {
+            "summary": "Credentials",
             "get": {
                 "tags": [
                     "#account"
@@ -526,6 +531,7 @@
             ]
         },
         "/account/credentials/{credentialId}": {
+            "summary": "Credential management",
             "delete": {
                 "tags": [
                     "#account"
@@ -566,6 +572,7 @@
             ]
         },
         "/account/credentials/{credentialId}/label": {
+            "summary": "Credential label",
             "put": {
                 "tags": [
                     "#account"
@@ -601,6 +608,7 @@
             ]
         },
         "/account/resources/shared-with-me": {
+            "summary": "Resources (shared with me)",
             "get": {
                 "tags": [
                     "#account"
@@ -627,6 +635,7 @@
             }
         },
         "/account/resources/shared-with-others": {
+            "summary": "Resources (shared with others)",
             "get": {
                 "tags": [
                     "#account"
@@ -654,6 +663,7 @@
             }
         },
         "/account/resources/pending-requests": {
+            "summary": "Resources (pending requests)",
             "get": {
                 "tags": [
                     "#account"
@@ -680,6 +690,7 @@
             }
         },
         "/account/resources/{id}": {
+            "summary": "Resource (by ID)",
             "get": {
                 "tags": [
                     "#account"
@@ -720,6 +731,7 @@
             ]
         },
         "/account/sessions/{id}": {
+            "summary": "Sessions (by ID)",
             "delete": {
                 "tags": [
                     "#account"
@@ -777,6 +789,7 @@
             ]
         },
         "/account/linked-accounts/{providerId}": {
+            "summary": "Linked Accounts (by Provider ID)",
             "get": {
                 "tags": [
                     "#account"
@@ -833,6 +846,7 @@
             ]
         },
         "/account": {
+            "summary": "Account",
             "get": {
                 "tags": [
                     "#account"
@@ -1007,6 +1021,7 @@
             }
         },
         "/account/sessions": {
+            "summary": "Sessions",
             "get": {
                 "tags": [
                     "#account"
@@ -1156,6 +1171,7 @@
             ]
         },
         "/account/sessions/devices": {
+            "summary": "Devices",
             "get": {
                 "tags": [
                     "#account"
@@ -1344,14 +1360,9 @@
             }
         },
         "securitySchemes": {
-            "oauth2": {
+            "access_token": {
                 "flows": {
-                    "implicit": {
-                        "authorizationUrl": "http://yourauthurl.com",
-                        "scopes": {
-                            "scope_name": "Enter your scopes here"
-                        }
-                    }
+
                 },
                 "type": "oauth2"
             }
@@ -1359,7 +1370,7 @@
     },
     "security": [
         {
-            "oauth2": [
+            "access_token": [
             ]
         }
     ],
