@@ -9,11 +9,17 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2-beta
         with:
-          node-version: '12'
-      - run: |
+          node-version: '14'
+      - name: Validate Schema
+        run: |
+          npm install -g @apidevtools/swagger-cli
+          swagger-cli validate descriptions/keycloak-13.0.0-oas3.yaml
+          swagger-cli validate descriptions/keycloak-13.0.0-oas3.json
+      - name: Generate Redoc Doc
+        run: |
           npm install -g redoc-cli
           mkdir public
-          redoc-cli bundle descriptions/keycloak-13.0.0.yaml -o public/account.html
+          redoc-cli bundle descriptions/keycloak-13.0.0-oas3.yaml -o public/account.html
           redoc-cli bundle https://raw.githubusercontent.com/ccouzens/keycloak-openapi/master/keycloak/11.0.json -o public/admin.html
       - name: Deploy to GitHub Pages
         if: success()
