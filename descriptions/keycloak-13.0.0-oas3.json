@@ -1,0 +1,1395 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Keycloak REST Account API",
+    "version": "v1alpha1",
+    "description": "Keycloak Account REST API documentation",
+    "contact": {
+      "name": "Keycloak Team",
+      "url": "https://keycloak.org",
+      "email": "keycloak-dev@googlegroups.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "servers": [
+    {
+      "url": "{protocol}://{hostname}/auth/realms/{realm}",
+      "description": "Realm URL",
+      "variables": {
+        "protocol": {
+          "enum": [
+            "http",
+            "https"
+          ],
+          "default": "https",
+          "description": "Communication Protocol"
+        },
+        "hostname": {
+          "default": "localhost",
+          "description": "Self-hosted Server"
+        },
+        "realm": {
+          "default": "master",
+          "description": "Realm Name"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/account/applications": {
+      "summary": "Applications",
+      "get": {
+        "tags": [
+          "Applications"
+        ],
+        "parameters": [
+          {
+            "example": {
+              "HTTP Parameter": {
+                "value": "name=security-admin-console"
+              }
+            },
+            "name": "name",
+            "description": "Application name",
+            "schema": {
+              "type": "string"
+            },
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientRepresentation"
+                },
+                "example": {
+                  "HTTP Response": {
+                    "value": [
+                      {
+                        "clientId": "security-admin-console",
+                        "clientName": "Security Admin Console",
+                        "userConsentRequired": false,
+                        "inUse": true,
+                        "offlineAccess": false,
+                        "rootUrl": "${authAdminUrl}",
+                        "baseUrl": "/admin/master/console/",
+                        "effectiveUrl": "http://localhost:8081/auth/admin/master/console/"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "description": "List of applications"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "summary": "List of applications associated with user's account",
+        "description": "List all the Internal and Thirdy-Party apps associated with user's account. \n\n* Internal apps: are the apps already existent in the admin console\n* Thirdy-party apps: external apps which users granted permissions like Facebook, GitHub and etc."
+      }
+    },
+    "/account/applications/{clientId}/consent": {
+      "summary": "Application Consent",
+      "get": {
+        "servers": [
+          {
+            "url": "http://localhost:8081"
+          }
+        ],
+        "tags": [
+          "Applications"
+        ],
+        "parameters": [
+          {
+            "name": "clientId",
+            "description": "Client ID to set a consent for",
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "required": true
+          },
+          {
+            "example": {
+              "Client ID example": {
+                "value": "cfc6b736-9688-4059-a3a2-f83430c0a604"
+              }
+            },
+            "name": "clientId",
+            "description": "client id to return the consent for",
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserConsentRepresentation"
+                },
+                "example": {
+                  "HTTP response": {
+                    "value": {
+                      "grantedScopes": [
+                        {
+                          "id": "7d672002-4f81-47e2-bc06-cd8e8213b7db",
+                          "name": "email",
+                          "displayTest": "Email address"
+                        },
+                        {
+                          "id": "965b5675-8a0f-4415-9fdb-fde796fcecec",
+                          "name": "profile",
+                          "displayTest": "User profile"
+                        },
+                        {
+                          "id": "9386605e-8214-4cb0-b374-265e5922f7a7",
+                          "name": "roles",
+                          "displayTest": "User roles"
+                        },
+                        {
+                          "id": "be44d222-518d-4a9a-bcb8-3eba58f5223f",
+                          "displayTest": "Hello Consent"
+                        }
+                      ],
+                      "createdDate": 1607626553169,
+                      "lastUpdatedDate": 1607626750000
+                    }
+                  }
+                }
+              }
+            },
+            "description": "List of consents for that particular client"
+          },
+          "204": {
+            "description": "Empty response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": {
+                  "Error": {
+                    "value": {
+                      "error": "unknown_error"
+                    }
+                  },
+                  "Error 2": {
+                    "value": "{\"errorMessage\":\"Scope id org.keycloak.representations.account.ConsentScopeRepresentation@646f5191 does not exist for client null.\"}%"
+                  }
+                }
+              }
+            },
+            "description": "Invalid parameters"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": {
+                  "Error": {
+                    "value": {
+                      "errorMessage": "No client with clientId: cfc6b736-9688-4059-a3a2-f83430c0a604 found."
+                    }
+                  }
+                }
+              }
+            },
+            "description": "Client not found"
+          }
+        },
+        "summary": "Returns the consent for the client with the given client id",
+        "description": ""
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentRepresentation"
+              }
+            }
+          }
+        },
+        "tags": [
+          "Applications"
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentRepresentation"
+                }
+              }
+            },
+            "description": "Consent of the client"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": {
+                  "HTTP response": {
+                    "value": {
+                      "error": "HTTP 401 Unauthorized"
+                    }
+                  }
+                }
+              }
+            },
+            "description": "Expired or invalid token."
+          }
+        },
+        "summary": "Creates a consent for the client with the given client id"
+      },
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentRepresentation"
+              }
+            }
+          }
+        },
+        "tags": [
+          "Applications"
+        ],
+        "responses": {
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": {
+                  "Error": {
+                    "value": {
+                      "error": "HTTP 401 Unauthorized"
+                    }
+                  }
+                }
+              }
+            },
+            "description": "Expired or invalid token."
+          }
+        },
+        "summary": "Updates the consent for the client with the given client id"
+      },
+      "delete": {
+        "tags": [
+          "Applications"
+        ],
+        "responses": {
+          "204": {
+            "description": "The resource was deleted successfully"
+          },
+          "404": {
+            "description": "Resource not found"
+          }
+        },
+        "summary": "Deletes the consent for the client with the given client id"
+      },
+      "parameters": [
+        {
+          "name": "clientId",
+          "description": "Client ID",
+          "schema": {
+            "type": "string"
+          },
+          "in": "path",
+          "required": true
+        }
+      ]
+    },
+    "/account/resources": {
+      "summary": "Resources",
+      "get": {
+        "tags": [
+          "Resources"
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Resource"
+                  }
+                }
+              }
+            },
+            "description": "Returns a list of resources where the current user is the resource owner"
+          },
+          "401": {
+            "description": "Expired or invalid token."
+          }
+        },
+        "summary": "Returns a list of resources where the current user is the resource owner",
+        "description": ""
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "description": "Name of the resource",
+          "schema": {
+            "type": "string"
+          },
+          "in": "query"
+        },
+        {
+          "name": "first",
+          "description": "First result",
+          "schema": {
+            "type": "string"
+          },
+          "in": "query"
+        },
+        {
+          "name": "max",
+          "description": "Max result",
+          "schema": {
+            "type": "string"
+          },
+          "in": "query"
+        }
+      ]
+    },
+    "/account/linked-accounts": {
+      "summary": "Linked Accounts",
+      "get": {
+        "tags": [
+          "Linked Accounts"
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LinkedAccountRepresentation"
+                  }
+                }
+              }
+            },
+            "description": "List of identity providers that's associated with user's account"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "summary": "Returns a list of social login accounts associated with the current user",
+        "description": ""
+      }
+    },
+    "/account/credentials": {
+      "summary": "Credentials",
+      "get": {
+        "tags": [
+          "Credentials"
+        ],
+        "parameters": [
+          {
+            "example": {
+              "Param Type": {
+                "value": "type=password"
+              }
+            },
+            "name": "type",
+            "description": "Allows to filter just single credential type, which will be specified as this parameter. If null, it will return all credential types",
+            "schema": {
+              "type": "string"
+            },
+            "in": "query"
+          },
+          {
+            "example": {
+              "Param": {
+                "value": "userCredentials=false"
+              }
+            },
+            "name": "userCredentials",
+            "description": "Specifies if user credentials should be returned. If true, they will be returned in the \"userCredentials\" attribute of particular credential. Defaults to true.",
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "HTTP Response": {
+                    "value": [
+                      {
+                        "type": "password",
+                        "category": "basic-authentication",
+                        "displayName": "password-display-name",
+                        "helptext": "password-help-text",
+                        "iconCssClass": "kcAuthenticatorPasswordClass",
+                        "updateAction": "UPDATE_PASSWORD",
+                        "removeable": false,
+                        "userCredentials": [
+                          {
+                            "id": "4e6042dc-80d8-4b36-8a02-cae6d2c65ed9",
+                            "type": "password",
+                            "createdDate": 1606416670489,
+                            "credentialData": "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "otp",
+                        "category": "two-factor",
+                        "displayName": "otp-display-name",
+                        "helptext": "otp-help-text",
+                        "iconCssClass": "kcAuthenticatorOTPClass",
+                        "createAction": "CONFIGURE_TOTP",
+                        "removeable": true,
+                        "userCredentials": []
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "description": "Retrieve the stream of credentials available to the current logged in user.\nIt will return only credentials of enabled types,  which user can use to au\nthenticate in some authentication flow."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "summary": "Retrieve the stream of credentials available to the current logged in user",
+        "description": "It will return only credentials of enabled types, which user can use to authenticate in some authentication flow."
+      },
+      "parameters": [
+        {
+          "example": {
+            "Type example": {
+              "value": "type=password"
+            }
+          },
+          "name": "type",
+          "description": "Allows to filter just single credential type, which will be specified as this parameter. If null, it will return all credential types",
+          "schema": {
+            "type": "string"
+          },
+          "in": "query",
+          "required": false
+        },
+        {
+          "example": {
+            "User Credentials example": {
+              "value": "userCredentials=false"
+            }
+          },
+          "name": "userCredentials",
+          "description": "Specifies if user credentials should be returned. If true, they will be returned in the \"userCredentials\" attribute of particular credential. Defaults to true",
+          "schema": {
+            "type": "boolean"
+          },
+          "in": "query"
+        }
+      ]
+    },
+    "/account/credentials/{credentialId}/label": {
+      "summary": "Credential label",
+      "put": {
+        "tags": [
+          "Credentials"
+        ],
+        "responses": {
+          "204": {
+            "description": "Empty response"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "summary": "Update a user label of specified credential of current user"
+      },
+      "parameters": [
+        {
+          "name": "credentialId",
+          "example": {
+            "Credential ID example": {
+              "value": "\"79fa6e23-bb31-4f09-9940-18992913262e\""
+            }
+          },
+          "description": "ID of the credential, which will be updated",
+          "schema": {
+            "type": "string"
+          },
+          "in": "path",
+          "required": true
+        }
+      ]
+    },
+    "/account/credentials/{credentialId}": {
+      "summary": "Credential management",
+      "delete": {
+        "tags": [
+          "Credentials"
+        ],
+        "responses": {
+          "204": {
+            "description": "Empty response"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": {
+                  "Error": {
+                    "value": {
+                      "error": "Credential not found"
+                    }
+                  }
+                }
+              }
+            },
+            "description": "Credential does not exist"
+          }
+        },
+        "summary": "Remove a credential of current user"
+      },
+      "parameters": [
+        {
+          "example": {
+            "Credential ID example": {
+              "value": "\"79fa6e23-bb31-4f09-9940-18992913262e\""
+            }
+          },
+          "name": "credentialId",
+          "description": "ID of the credential, which will be updated",
+          "schema": {
+            "type": "string"
+          },
+          "in": "path",
+          "required": true
+        }
+      ]
+    },
+    "/account/resources/shared-with-me": {
+      "summary": "Resources (shared with me)",
+      "get": {
+        "tags": [
+          "Resources"
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Resource"
+                  }
+                }
+              }
+            },
+            "description": "List of resources"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "summary": "Returns a list of resources shared with the current user"
+      }
+    },
+    "/account/resources/shared-with-others": {
+      "summary": "Resources (shared with others)",
+      "get": {
+        "tags": [
+          "Resources"
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Resource"
+                  }
+                }
+              }
+            },
+            "description": "List of resources"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "summary": "Returns a list of resources shared with others",
+        "description": "The endpoint returns a list of resources where the current user is the resource owner and the resource is shared with other users."
+      }
+    },
+    "/account/resources/pending-requests": {
+      "summary": "Resources (pending requests)",
+      "get": {
+        "tags": [
+          "Resources"
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResourcePermission"
+                  }
+                }
+              }
+            },
+            "description": "List of pending requests"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "summary": "Returns a list of pending requests"
+      }
+    },
+    "/account/resources/{id}": {
+      "summary": "Resource (by ID)",
+      "get": {
+        "tags": [
+          "Resources"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resource"
+                }
+              }
+            },
+            "description": "Return the resource"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "summary": "Returns the resource by id where the current user is the resource owner"
+      }
+    },
+    "/account/linked-accounts/{providerId}": {
+      "summary": "Linked Accounts (by Provider ID)",
+      "get": {
+        "tags": [
+          "Linked Accounts"
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "example": {
+              "Provider ID example": {
+                "value": "\"db400952-bc53-4ebf-99df-91dc2ae0f491\""
+              }
+            },
+            "description": "Provider ID",
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountLinkUriRepresentation"
+                }
+              }
+            },
+            "description": "Retrieve the linked account URI"
+          },
+          "400": {
+            "description": "Invalid Redirect URI"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "description": "Failed to process response"
+          }
+        },
+        "summary": "Filter the linked accounts by provider id (deprecated)"
+      },
+      "parameters": [
+        {
+          "name": "providerId",
+          "schema": {
+            "type": "string"
+          },
+          "in": "path",
+          "required": true
+        }
+      ]
+    },
+    "/account": {
+      "summary": "Account",
+      "description": "",
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRepresentation",
+                  "properties": {
+                    "emailVerified": {
+                      "type": "boolean"
+                    },
+                    "attributes": {
+                      "type": "object"
+                    },
+                    "username": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "HTTP Response": {
+                    "value": {
+                      "username": "admin",
+                      "firstName": "Ada",
+                      "lastName": "Lovelace",
+                      "email": "admin@admin.org",
+                      "emailVerified": false,
+                      "attributes": {
+                        "super": [
+                          "admin"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "description": "Account details."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": {
+                  "HTTP Response": {
+                    "value": {
+                      "error": "HTTP 401 Unauthorized"
+                    }
+                  }
+                }
+              }
+            },
+            "description": "Expired token, or the client role `view-profile` is not assigned "
+          }
+        },
+        "summary": "User's account information",
+        "description": "Retrieve the account information associated with the authenticated user."
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRepresentation",
+                "properties": {
+                  "emailVerified": {
+                    "type": "boolean"
+                  },
+                  "attributes": {
+                    "type": "object"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "HTTP Request": {
+                  "value": {
+                    "username": "admin",
+                    "email": "admin@keycloak.org",
+                    "emailVerified": false,
+                    "attributes": {}
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "tags": [
+          "Account"
+        ],
+        "responses": {
+          "204": {
+            "description": "HTTP response on successful update"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": {
+                  "Read-only Username": {
+                    "value": {
+                      "errorMessage": "readOnlyUsernameMessage"
+                    }
+                  },
+                  "Error": {
+                    "value": {
+                      "error": "unknown_error"
+                    }
+                  }
+                }
+              }
+            },
+            "description": "HTTP response on invalid requests. For example:\n\n* Trying to modify the `username`, which is read-only, trough the API.\n* Using a malformed HTTP request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": {
+                  "Error": {
+                    "value": {
+                      "error": "HTTP 401 Unauthorized"
+                    }
+                  }
+                }
+              }
+            },
+            "description": "Access token does not have the rights to create or modify an account. Potential causes:\n\n* Expired access token\n* Access token does not have access to perform this operation"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": {
+                  "E-mail exists": {
+                    "value": {
+                      "error": "Email already exists"
+                    }
+                  },
+                  "Username exists": {
+                    "value": {
+                      "error": "Username already exists"
+                    }
+                  }
+                }
+              }
+            },
+            "description": "Username or e-mail already exists."
+          }
+        },
+        "summary": "Update or create a user's account",
+        "description": ""
+      }
+    },
+    "/account/sessions": {
+      "summary": "Sessions",
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": {
+                  "HTTP Response": {
+                    "value": [
+                      {
+                        "id": "36931610-41d9-4bbc-9bf4-52aa8b0e1c86",
+                        "ipAddress": "127.0.0.1",
+                        "started": 1607370609,
+                        "lastAccess": 1607370609,
+                        "expires": 1607406609,
+                        "clients": [
+                          {
+                            "clientId": "admin-cli",
+                            "clientName": "${client_admin-cli}",
+                            "userConsentRequired": false,
+                            "inUse": false,
+                            "offlineAccess": false
+                          }
+                        ],
+                        "browser": "curl/7.71.1",
+                        "current": true
+                      },
+                      {
+                        "id": "41e2e1bd-4d95-4e69-9c53-b011630bc342",
+                        "ipAddress": "127.0.0.1",
+                        "started": 1607368841,
+                        "lastAccess": 1607368919,
+                        "expires": 1607404841,
+                        "clients": [
+                          {
+                            "clientId": "security-admin-console",
+                            "clientName": "${client_security-admin-console}",
+                            "userConsentRequired": false,
+                            "inUse": false,
+                            "offlineAccess": false
+                          }
+                        ],
+                        "browser": "Chrome/87.0.4280"
+                      },
+                      {
+                        "id": "a6c768bb-2364-4efb-9b26-09a27e514557",
+                        "ipAddress": "127.0.0.1",
+                        "started": 1607368895,
+                        "lastAccess": 1607368895,
+                        "expires": 1607404895,
+                        "clients": [
+                          {
+                            "clientId": "admin-cli",
+                            "clientName": "${client_admin-cli}",
+                            "userConsentRequired": false,
+                            "inUse": false,
+                            "offlineAccess": false
+                          }
+                        ],
+                        "browser": "curl/7.71.1"
+                      },
+                      {
+                        "id": "05e95226-57e4-4f40-8bd2-e69b363076c2",
+                        "ipAddress": "127.0.0.1",
+                        "started": 1607368815,
+                        "lastAccess": 1607368815,
+                        "expires": 1607404815,
+                        "clients": [
+                          {
+                            "clientId": "admin-cli",
+                            "clientName": "${client_admin-cli}",
+                            "userConsentRequired": false,
+                            "inUse": false,
+                            "offlineAccess": false
+                          }
+                        ],
+                        "browser": "curl/7.71.1"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "description": "List of active sessions."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": {
+                  "Error": {
+                    "value": {
+                      "error": "HTTP 401 Unauthorized"
+                    }
+                  }
+                }
+              }
+            },
+            "description": "Expired or invalid token."
+          }
+        },
+        "summary": "Get session information",
+        "description": ""
+      },
+      "delete": {
+        "tags": [
+          "Account"
+        ],
+        "parameters": [
+          {
+            "example": {
+              "Example": {
+                "value": "current=false"
+              }
+            },
+            "name": "current",
+            "description": "Remove current session (default is false)",
+            "schema": {
+              "type": "string"
+            },
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Empty response"
+          }
+        },
+        "summary": "Remove current session"
+      },
+      "parameters": [
+        {
+          "name": "current",
+          "description": "Current session (default is false)",
+          "schema": {
+            "type": "string"
+          },
+          "in": "query"
+        }
+      ]
+    },
+    "/account/sessions/devices": {
+      "summary": "Devices",
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": {
+                  "HTTP response": {
+                    "value": [
+                      {
+                        "os": "Other",
+                        "osVersion": "Unknown",
+                        "device": "Other",
+                        "lastAccess": 1607539545,
+                        "current": true,
+                        "sessions": [
+                          {
+                            "id": "3b882057-4411-4855-ac83-81d0927973a3",
+                            "ipAddress": "127.0.0.1",
+                            "started": 1607539522,
+                            "lastAccess": 1607539522,
+                            "expires": 1607575522,
+                            "clients": [
+                              {
+                                "clientId": "admin-cli",
+                                "clientName": "${client_admin-cli}",
+                                "userConsentRequired": false,
+                                "inUse": false,
+                                "offlineAccess": false
+                              }
+                            ],
+                            "browser": "curl/7.71.1"
+                          },
+                          {
+                            "id": "73652c46-767b-494f-a581-48ec05ab2bf8",
+                            "ipAddress": "127.0.0.1",
+                            "started": 1607538559,
+                            "lastAccess": 1607538559,
+                            "expires": 1607574559,
+                            "clients": [
+                              {
+                                "clientId": "admin-cli",
+                                "clientName": "${client_admin-cli}",
+                                "userConsentRequired": false,
+                                "inUse": false,
+                                "offlineAccess": false
+                              }
+                            ],
+                            "browser": "curl/7.71.1"
+                          },
+                          {
+                            "id": "eafdac5a-a922-41f3-93b4-573866b4449b",
+                            "ipAddress": "127.0.0.1",
+                            "started": 1607539545,
+                            "lastAccess": 1607539545,
+                            "expires": 1607575545,
+                            "clients": [
+                              {
+                                "clientId": "admin-cli",
+                                "clientName": "${client_admin-cli}",
+                                "userConsentRequired": false,
+                                "inUse": false,
+                                "offlineAccess": false
+                              }
+                            ],
+                            "browser": "curl/7.71.1",
+                            "current": true
+                          }
+                        ],
+                        "mobile": false
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "description": "response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": {
+                  "Error": {
+                    "value": {
+                      "error": "HTTP 401 Unauthorized"
+                    }
+                  }
+                }
+              }
+            },
+            "description": "Expired or invalid token."
+          }
+        },
+        "summary": "Get the device activity information based on the active sessions"
+      }
+    },
+    "/account/sessions/{id}": {
+      "summary": "Sessions (by ID)",
+      "delete": {
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "example": {
+              "ID Example": {
+                "value": "73652c46-767b-494f-a581-48ec05ab2bf8"
+              }
+            },
+            "name": "id",
+            "description": "id a specific session to remove",
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Empty response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": {
+                  "Error": {
+                    "value": {
+                      "error": "HTTP 401 Unauthorized"
+                    }
+                  }
+                }
+              }
+            },
+            "description": "Expired or invalid token."
+          }
+        },
+        "summary": "Remove a specific session",
+        "description": ""
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "schema": {
+            "type": "string"
+          },
+          "in": "path",
+          "required": true
+        }
+      ]
+    }
+  },
+  "components": {
+    "schemas": {
+      "ConsentRepresentation": {
+        "description": "Requested consent for the client",
+        "type": "object"
+      },
+      "UserRepresentation": {
+        "description": "User account details",
+        "type": "object"
+      },
+      "UserConsentRepresentation": {
+        "description": "",
+        "type": "object"
+      },
+      "ClientRepresentation": {
+        "description": "",
+        "type": "object"
+      },
+      "Resource": {
+        "description": "",
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "",
+            "type": "string"
+          },
+          "name": {
+            "description": "",
+            "type": "string"
+          },
+          "displayName": {
+            "description": "",
+            "type": "string"
+          },
+          "uris": {
+            "description": "",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "iconURI": {
+            "description": "",
+            "type": "string"
+          }
+        }
+      },
+      "LinkedAccountRepresentation": {
+        "description": "",
+        "type": "object"
+      },
+      "AccountLinkUriRepresentation": {
+        "description": "",
+        "type": "object"
+      },
+      "ResourcePermission": {
+        "description": "",
+        "type": "object"
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "string"
+            },
+            "example": {
+              "HTTP Response": {
+                "value": {
+                  "error": "HTTP 401 Unauthorized"
+                }
+              }
+            }
+          }
+        },
+        "description": "Expired or invalid token."
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "description": "User Access Token (obtained with profile scope)",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Account",
+      "description": "Account REST API"
+    },
+    {
+      "name": "Applications",
+      "description": ""
+    },
+    {
+      "name": "Credentials",
+      "description": ""
+    },
+    {
+      "name": "Linked Accounts",
+      "description": ""
+    },
+    {
+      "name": "Resources",
+      "description": ""
+    },
+    {
+      "name": "Sessions",
+      "description": ""
+    }
+  ],
+  "externalDocs": {
+    "description": "Keycloak Developer Docs",
+    "url": "https://www.keycloak.org/docs-api/v1alpha1/rest-api/index.html"
+  }
+}
